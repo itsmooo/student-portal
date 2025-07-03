@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+/* Base styles */
+@layer base {
+  html {
+    font-family: system-ui, sans-serif;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Custom styles can be added here */
+@layer components {
+  /* Add custom component styles here */
+}
+
+@layer utilities {
+  /* Add custom utility styles here */
+}
