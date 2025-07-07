@@ -37,13 +37,24 @@ public class AuthController {
                     .body(new MessageResponse("Error: Email is already in use!"));
         }
 
+        // Determine role from request, default to STUDENT if not specified
+        Role userRole = Role.STUDENT;
+        if (registerRequest.getRole() != null && !registerRequest.getRole().trim().isEmpty()) {
+            try {
+                userRole = Role.valueOf(registerRequest.getRole().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest()
+                        .body(new MessageResponse("Error: Invalid role specified!"));
+            }
+        }
+        
         // Create new user
         User user = new User(registerRequest.getUsername(),
                            registerRequest.getEmail(),
                            registerRequest.getPassword(),
                            registerRequest.getFirstName(),
                            registerRequest.getLastName(),
-                           Role.STUDENT);
+                           userRole);
         user.setFaculty(registerRequest.getFaculty());
         // Store supervisor name as a string field
         if (registerRequest.getSupervisorName() != null && !registerRequest.getSupervisorName().trim().isEmpty()) {
@@ -71,14 +82,16 @@ public class AuthController {
                         .body(new MessageResponse("Error: Invalid credentials!"));
             }
             
-            // Generate JWT token
-            String token = jwtUtils.generateToken(user.getUsername());
+            // Generate JWT token with role information
+            String token = jwtUtils.generateToken(user.getUsername(), user.getRole());
             
-            JwtResponse response = new JwtResponse(token, 
-                                                  user.getId(), 
-                                                  user.getUsername(), 
-                                                  user.getEmail(), 
-                                                  user.getRole());
+                    JwtResponse response = new JwtResponse(token, 
+                                              user.getId(), 
+                                              user.getUsername(), 
+                                              user.getEmail(), 
+                                              user.getRole(),
+                                              user.getFirstName(),
+                                              user.getLastName());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -100,6 +113,7 @@ public class AuthController {
         private String lastName;
         private String faculty;
         private String supervisorName;
+        private String role;
 
         // Getters and setters
         public String getUsername() { return username; }
@@ -122,6 +136,9 @@ public class AuthController {
 
         public String getSupervisorName() { return supervisorName; }
         public void setSupervisorName(String supervisorName) { this.supervisorName = supervisorName; }
+
+        public String getRole() { return role; }
+        public void setRole(String role) { this.role = role; }
     }
 
     public static class LoginRequest {
@@ -155,7 +172,7 @@ public class AuthController {
         private Role role;
         private User user;
 
-        public JwtResponse(String accessToken, Long id, String username, String email, Role role) {
+        public JwtResponse(String accessToken, Long id, String username, String email, Role role, String firstName, String lastName) {
             this.token = accessToken;
             this.id = id;
             this.username = username;
@@ -167,6 +184,8 @@ public class AuthController {
             this.user.setUsername(username);
             this.user.setEmail(email);
             this.user.setRole(role);
+            this.user.setFirstName(firstName);
+            this.user.setLastName(lastName);
         }
 
         // Getters and setters
@@ -193,6 +212,9 @@ public class AuthController {
 
         public User getUser() { return user; }
         public void setUser(User user) { this.user = user; }
+        
+        public String getFirstName() { return user.getFirstName(); }
+        public String getLastName() { return user.getLastName(); }
     }
 }
  

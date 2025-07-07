@@ -5,23 +5,40 @@ import com.studentporta.entity.Role;
 import com.studentporta.entity.User;
 import com.studentporta.respository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
-public class UserService {
+public class UserService implements UserDetailsService {
     
     @Autowired
     private UserRepository userRepository;
     
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+
+        return org.springframework.security.core.userdetails.User.builder()
+                .username(user.getUsername())
+                .password(user.getPassword())
+                .authorities(Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())))
+                .build();
+    }
 
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll().stream()
@@ -50,7 +67,7 @@ public class UserService {
     }
 
     public List<UserDTO> getAllFaculty() {
-        return getUsersByRole(Role.FACULTY);
+        return getUsersByRole(Role.SUPERVISOR);
     }
 
     public List<UserDTO> getAllStudents() {
@@ -105,6 +122,51 @@ public class UserService {
         return userRepository.findById(id);
     }
 
+    public UserDTO assignFacultyToStudent(Long studentId, Long facultyId) {
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found with id: " + studentId));
+        
+        User faculty = userRepository.findById(facultyId)
+                .orElseThrow(() -> new RuntimeException("Faculty not found with id: " + facultyId));
+        
+        if (faculty.getRole() != Role.SUPERVISOR) {
+            throw new RuntimeException("User with id " + facultyId + " is not a faculty member");
+        }
+        
+        student.setSupervisor(faculty);
+        student.setSupervisorName(faculty.getFirstName() + " " + faculty.getLastName());
+        User updatedStudent = userRepository.save(student);
+        return convertToDTO(updatedStudent);
+    }
+
+    public List<UserDTO> getStudentsBySupervisor(Long supervisorId) {
+        return userRepository.findBySupervisorId(supervisorId).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public UserDTO removeSupervisorFromStudent(Long studentId) {
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found with id: " + studentId));
+        
+        // Check if the student has a supervisor
+        if (student.getSupervisor() == null) {
+            throw new RuntimeException("Student is not assigned to any supervisor");
+        }
+        
+        student.setSupervisor(null);
+        student.setSupervisorName(null);
+        User updatedStudent = userRepository.save(student);
+        return convertToDTO(updatedStudent);
+    }
+
+    public boolean canSupervisorRemoveStudent(Long supervisorId, Long studentId) {
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found with id: " + studentId));
+        
+        return student.getSupervisor() != null && student.getSupervisor().getId().equals(supervisorId);
+    }
+
     private UserDTO convertToDTO(User user) {
         UserDTO dto = new UserDTO();
         dto.setId(user.getId());
@@ -114,7 +176,14 @@ public class UserService {
         dto.setLastName(user.getLastName());
         dto.setRole(user.getRole());
         dto.setFaculty(user.getFaculty());
-        dto.setSupervisorName(user.getSupervisorName());
+        
+        // Set supervisorName from the supervisor relationship if available
+        if (user.getSupervisor() != null) {
+            dto.setSupervisorName(user.getSupervisor().getFirstName() + " " + user.getSupervisor().getLastName());
+        } else {
+            dto.setSupervisorName(user.getSupervisorName());
+        }
+        
         return dto;
     }
 }

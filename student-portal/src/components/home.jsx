@@ -32,7 +32,7 @@ export default function LoginPage() {
       const role = result.user.role;
       if (role === "ADMIN") {
         navigate("/admin");
-      } else if (role === "FACULTY") {
+      } else if (role === "SUPERVISOR") {
         navigate("/faculty");
       } else {
         navigate("/dashboard");
@@ -303,7 +303,7 @@ export default function LoginPage() {
                   }
                 >
                   <option value="STUDENT">Student</option>
-                  <option value="FACULTY">Faculty</option>
+                  <option value="SUPERVISOR">Supervisor</option>
                   <option value="ADMIN">Admin</option>
                 </select>
               </div>

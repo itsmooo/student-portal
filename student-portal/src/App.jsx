@@ -1,13 +1,14 @@
 import './App.css'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Home from './components/home'
-import Dashboard from './components/Dashboard'
+import StudentDashboard from './components/StudentDashboard'
 import AdminDashboard from './components/admin/DashbaordAdmin'
-import FacultyDashboard from './components/Foculty'
+import FacultyDashboard from './components/FacultyDashboard'
 import Project from './components/Project'
 import Loading from './components/admin/Loading'
+import { Navigate } from 'react-router-dom'
 
 function App() {
 
@@ -20,7 +21,7 @@ function App() {
             path="/dashboard" 
             element={
               <ProtectedRoute allowedRoles={["STUDENT"]}>
-                <Dashboard />
+                <StudentDashboard />
               </ProtectedRoute>
             } 
           />
@@ -35,7 +36,7 @@ function App() {
           <Route 
             path="/faculty" 
             element={
-              <ProtectedRoute allowedRoles={["FACULTY"]}>
+              <ProtectedRoute allowedRoles={["SUPERVISOR"]}>
                 <FacultyDashboard />
               </ProtectedRoute>
             } 
@@ -49,10 +50,27 @@ function App() {
             } 
           />
           <Route path="/loading" element={<Loading />} />
+          <Route 
+            path="/redirect" 
+            element={<DashboardRedirect />} 
+          />
         </Routes>
       </Router>
     </AuthProvider>
   )
 }
+
+// Component to redirect users to their appropriate dashboard
+const DashboardRedirect = () => {
+  const { user } = useAuth();
+  
+  if (user?.role === "ADMIN") {
+    return <Navigate to="/admin" replace />;
+  } else if (user?.role === "SUPERVISOR") {
+    return <Navigate to="/faculty" replace />;
+  } else {
+    return <Navigate to="/dashboard" replace />;
+  }
+};
 
 export default App

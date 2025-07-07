@@ -17,6 +17,13 @@ public class ProjectDTO {
     private String title;
     
     @NotBlank
+    @Size(max = 1000)
+    private String objective;
+    
+    @Size(max = 500)
+    private String tools;
+    
+    @NotBlank
     private String description;
     
     @Size(max = 50)
@@ -39,6 +46,10 @@ public class ProjectDTO {
     
     private String resources;
     private Integer durationMonths;
+    
+    private String githubLink;
+    private String reportFile;
+    private String screenshots;
 
     private Long facultyId;
     private LocalDateTime createdAt;
@@ -47,17 +58,19 @@ public class ProjectDTO {
     // Constructors
     public ProjectDTO() {}
 
-    public ProjectDTO(String title, String description, String category, Long studentId) {
+    public ProjectDTO(String title, String objective, String description, String category, Long studentId) {
         this.title = title;
+        this.objective = objective;
         this.description = description;
         this.category = category;
         this.studentId = studentId;
     }
 
-    public ProjectDTO(Long id, String title, String description, ProjectStatus status, 
+    public ProjectDTO(Long id, String title, String objective, String description, ProjectStatus status, 
                      Long studentId, Long facultyId, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.title = title;
+        this.objective = objective;
         this.description = description;
         this.status = status;
         this.studentId = studentId;
@@ -65,13 +78,18 @@ public class ProjectDTO {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
-
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
+
+    public String getObjective() { return objective; }
+    public void setObjective(String objective) { this.objective = objective; }
+
+    public String getTools() { return tools; }
+    public void setTools(String tools) { this.tools = tools; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
@@ -108,6 +126,15 @@ public class ProjectDTO {
 
     public Integer getDurationMonths() { return durationMonths; }
     public void setDurationMonths(Integer durationMonths) { this.durationMonths = durationMonths; }
+
+    public String getGithubLink() { return githubLink; }
+    public void setGithubLink(String githubLink) { this.githubLink = githubLink; }
+
+    public String getReportFile() { return reportFile; }
+    public void setReportFile(String reportFile) { this.reportFile = reportFile; }
+
+    public String getScreenshots() { return screenshots; }
+    public void setScreenshots(String screenshots) { this.screenshots = screenshots; }
 
     public Long getFacultyId() {
         return facultyId;

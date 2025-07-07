@@ -32,4 +32,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     
     @Query("SELECT COUNT(p) FROM Project p WHERE p.faculty.id = :facultyId")
     Long countByFacultyId(@Param("facultyId") Long facultyId);
+    
+    List<Project> findByFacultyIsNull();
 }
