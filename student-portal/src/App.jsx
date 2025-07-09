@@ -2,6 +2,7 @@ import './App.css'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import LandingPage from './components/LandingPage'
 import Home from './components/home'
 import StudentDashboard from './components/StudentDashboard'
 import AdminDashboard from './components/admin/DashbaordAdmin'
@@ -16,7 +17,8 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<Home />} />
           <Route 
             path="/dashboard" 
             element={

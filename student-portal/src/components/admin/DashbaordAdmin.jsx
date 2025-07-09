@@ -378,7 +378,7 @@ export default function CleanAdminDashboard() {
       console.log("Updating project with data:", projectData);
       console.log("Current user:", user);
       console.log("User role:", user?.role);
-      
+
       await projectAPI.updateProject(updatedProject.id, projectData);
       await fetchProjects();
       setShowEditProjectModal(false);
