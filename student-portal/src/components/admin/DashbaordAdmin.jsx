@@ -333,6 +333,7 @@ export default function CleanAdminDashboard() {
       await userAPI.updateUser(updatedUser.id, updatedUser);
       await fetchUsers();
       setShowEditUserModal(false);
+      setEditUser(null);
     } catch (error) {
       console.error("Error updating user:", error);
       setError("Failed to update user");
@@ -360,12 +361,9 @@ export default function CleanAdminDashboard() {
     try {
       const projectData = {
         title: updatedProject.title,
+        objective: updatedProject.objective || updatedProject.description, // Use description as objective if not set
         description: updatedProject.description,
         category: updatedProject.category,
-        studentId: Number.parseInt(updatedProject.studentId),
-        facultyId: updatedProject.facultyId
-          ? Number.parseInt(updatedProject.facultyId)
-          : null,
         startDate: updatedProject.startDate || null,
         endDate: updatedProject.endDate || null,
         resources: updatedProject.resources,
@@ -373,14 +371,24 @@ export default function CleanAdminDashboard() {
           ? Number.parseInt(updatedProject.durationMonths)
           : null,
         status: updatedProject.status,
+        tools: updatedProject.tools || "",
+        progress: updatedProject.progress || 0,
       };
 
+      console.log("Updating project with data:", projectData);
+      console.log("Current user:", user);
+      console.log("User role:", user?.role);
+      
       await projectAPI.updateProject(updatedProject.id, projectData);
       await fetchProjects();
       setShowEditProjectModal(false);
+      setEditProject(null);
+      setError(null); // Clear any previous errors
     } catch (error) {
       console.error("Error updating project:", error);
-      setError("Failed to update project");
+      console.error("Error response:", error.response?.data);
+      console.error("Error status:", error.response?.status);
+      setError(`Failed to update project: ${error.response?.data?.message || error.message}`);
     }
   };
 
@@ -1334,7 +1342,277 @@ export default function CleanAdminDashboard() {
         </div>
       )}
 
-      {/* Add similar modals for other operations... */}
+      {/* Edit User Modal */}
+      {showEditUserModal && editUser && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 backdrop-blur-sm">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Edit User
+            </h3>
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              handleUpdateUser(editUser)
+            }} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    First Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={editUser.firstName}
+                    onChange={(e) => setEditUser({...editUser, firstName: e.target.value})}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Last Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={editUser.lastName}
+                    onChange={(e) => setEditUser({...editUser, lastName: e.target.value})}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={editUser.email}
+                  onChange={(e) => setEditUser({...editUser, email: e.target.value})}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Role *
+                </label>
+                <select
+                  value={editUser.role}
+                  onChange={(e) => setEditUser({...editUser, role: e.target.value})}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="STUDENT">Student</option>
+                  <option value="SUPERVISOR">Supervisor</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Faculty/Department
+                </label>
+                <select
+                  value={editUser.faculty || ""}
+                  onChange={(e) => setEditUser({...editUser, faculty: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select department</option>
+                  {facultyOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center justify-end gap-3 pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={() => setShowEditUserModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                >
+                  Update User
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Project Modal */}
+      {showEditProjectModal && editProject && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 backdrop-blur-sm">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Edit Project
+            </h3>
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              handleUpdateProject(editProject)
+            }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Project Title *
+                </label>
+                <input
+                  type="text"
+                  value={editProject.title}
+                  onChange={(e) => setEditProject({...editProject, title: e.target.value})}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Objective *
+                </label>
+                <textarea
+                  value={editProject.objective || editProject.description}
+                  onChange={(e) => setEditProject({...editProject, objective: e.target.value})}
+                  required
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description *
+                </label>
+                <textarea
+                  value={editProject.description}
+                  onChange={(e) => setEditProject({...editProject, description: e.target.value})}
+                  required
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Category
+                  </label>
+                  <input
+                    type="text"
+                    value={editProject.category || ""}
+                    onChange={(e) => setEditProject({...editProject, category: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Status *
+                  </label>
+                  <select
+                    value={editProject.status}
+                    onChange={(e) => setEditProject({...editProject, status: e.target.value})}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="PENDING">Pending</option>
+                    <option value="APPROVED">Approved</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="REJECTED">Rejected</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={editProject.startDate || ""}
+                    onChange={(e) => setEditProject({...editProject, startDate: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={editProject.endDate || ""}
+                    onChange={(e) => setEditProject({...editProject, endDate: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Resources
+                </label>
+                <textarea
+                  value={editProject.resources || ""}
+                  onChange={(e) => setEditProject({...editProject, resources: e.target.value})}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Duration (Months)
+                </label>
+                <input
+                  type="number"
+                  value={editProject.durationMonths || ""}
+                  onChange={(e) => setEditProject({...editProject, durationMonths: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div className="flex items-center justify-end gap-3 pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={() => setShowEditProjectModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                >
+                  Update Project
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Project Confirmation */}
+      {showDeleteProjectId && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 backdrop-blur-sm">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Delete Project
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this project? This action cannot be undone.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteProjectId(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteProject(showDeleteProjectId)}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

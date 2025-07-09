@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -87,8 +88,28 @@ public class DocumentService {
     }
 
     public List<DocumentDTO> getDocumentsForStudent(Long studentId) {
-        List<Document> documents = documentRepository.findByStudentIdOrderByCreatedAtDesc(studentId);
-        return documents.stream()
+        // Get student-specific documents
+        List<Document> studentSpecificDocuments = documentRepository.findByStudentIdOrderByCreatedAtDesc(studentId);
+        
+        // Get student's supervisor
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+        
+        // Get general documents from student's supervisor
+        List<Document> generalDocuments = new ArrayList<>();
+        if (student.getSupervisor() != null) {
+            generalDocuments = documentRepository.findGeneralDocumentsBySupervisor(student.getSupervisor().getId());
+        }
+        
+        // Combine both lists
+        List<Document> allDocuments = new ArrayList<>();
+        allDocuments.addAll(studentSpecificDocuments);
+        allDocuments.addAll(generalDocuments);
+        
+        // Sort by creation date (newest first)
+        allDocuments.sort((d1, d2) -> d2.getCreatedAt().compareTo(d1.getCreatedAt()));
+        
+        return allDocuments.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }

@@ -77,10 +77,17 @@ export default function FacultyDashboard() {
       // For supervisors, get projects from their assigned students
       if (user?.role === 'SUPERVISOR') {
         console.log("Fetching projects for supervisor ID:", user.id)
-        // Use the supervisor ID from the current user
-        const res = await projectAPI.getProjectsBySupervisorStudents(user.id)
-        console.log("Projects response:", res.data)
-        setProjects(res.data)
+        // First try to get supervisor-specific projects
+        const supervisorRes = await projectAPI.getProjectsBySupervisorStudents(user.id)
+        console.log("Supervisor projects response:", supervisorRes.data)
+        
+        // Debug: Also get all projects to see if there are any in the system
+        const allRes = await projectAPI.getAllProjects()
+        console.log("All projects in system:", allRes.data)
+        console.log("Total projects count:", allRes.data.length)
+        console.log("Projects with PENDING status:", allRes.data.filter(p => p.status === 'PENDING'))
+        
+        setProjects(supervisorRes.data)
       } else {
         console.log("Fetching all projects for non-supervisor")
         // For admins and other roles, get all projects
@@ -482,7 +489,7 @@ export default function FacultyDashboard() {
 
               <div className="space-y-4">
                 {projects
-                  .filter((p) => p.status === "UNDER_REVIEW")
+                  .filter((p) => p.status === "PENDING")
                   .map((project) => (
                     <div
                       key={project.id}
@@ -535,7 +542,7 @@ export default function FacultyDashboard() {
                     </div>
                   ))}
 
-                {projects.filter((p) => p.status === "UNDER_REVIEW").length === 0 && (
+                {projects.filter((p) => p.status === "PENDING").length === 0 && (
                   <div className="text-center py-12 bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20">
                     <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No pending proposals</h3>

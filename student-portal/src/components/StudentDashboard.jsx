@@ -257,7 +257,7 @@ export default function StudentDashboard() {
   const stats = {
     totalProjects: projects.length,
     pendingProjects: projects.filter((p) => p.status === "PENDING").length,
-    approvedProjects: projects.filter((p) => p.status === "IN_PROGRESS").length,
+    approvedProjects: projects.filter((p) => p.status === "APPROVED" || p.status === "IN_PROGRESS").length,
     completedProjects: projects.filter((p) => p.status === "COMPLETED").length,
   }
 
@@ -949,7 +949,7 @@ export default function StudentDashboard() {
                     >
                       <option value="">Choose a project...</option>
                       {projects
-                        .filter((project) => project.status === "IN_PROGRESS")
+                        .filter((project) => project.status === "APPROVED" || project.status === "IN_PROGRESS")
                         .map((project) => (
                           <option key={project.id} value={project.id}>
                             {project.title} ({project.status})
@@ -957,7 +957,7 @@ export default function StudentDashboard() {
                         ))}
                     </select>
                     <p className="text-xs text-gray-500 mt-1">
-                      Available projects: {projects.filter((p) => p.status === "IN_PROGRESS").length}
+                      Available projects: {projects.filter((p) => p.status === "APPROVED" || p.status === "IN_PROGRESS").length}
                     </p>
                   </div>
                 )}
